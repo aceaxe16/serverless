@@ -2,6 +2,7 @@ service: sls-base
 
 plugins:
   - serverless-pseudo-parameters
+  - serverless-offline
 
 provider:
   name: aws

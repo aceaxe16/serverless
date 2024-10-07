@@ -2,6 +2,9 @@ import { v4 as uuid } from 'uuid';
 import AWS from 'aws-sdk';
 import { commonMiddleware } from '../libs/commonMiddleware.mjs';
 import createError from 'http-errors';
+import validator from '@middy/validator';
+import { transpileSchema } from '@middy/validator/transpile';
+import { schema as createAuctionSchema } from '../libs/schemas/createAuctionSchema.mjs';
 
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
@@ -23,14 +26,14 @@ async function createAuction(event, context) {
     },
   }
 
-  try{
+  try {
     await dynamoDb.put({
       TableName: process.env.AUCTIONS_TABLE_NAME,
       Item: auction,
     }).promise();
-  } catch(err) {
+  } catch (err) {
     console.log(err);
-    throw new createError.InternalServerError(err)    
+    throw new createError.InternalServerError(err)
   }
 
   return {
@@ -39,6 +42,9 @@ async function createAuction(event, context) {
   };
 }
 
-export const handler = commonMiddleware(createAuction);
+export const handler = commonMiddleware(createAuction)
+  .use(validator({
+    eventSchema: transpileSchema(createAuctionSchema)
+  }));
 
 

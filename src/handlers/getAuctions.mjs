@@ -1,6 +1,9 @@
 import AWS from 'aws-sdk';
 import { commonMiddleware } from '../libs/commonMiddleware.mjs';
 import createError from 'http-errors';
+import validator from '@middy/validator';
+import { transpileSchema } from '@middy/validator/transpile';
+import { schema as getAuctionsSchema } from '../libs/schemas/getAuctionsSchema.mjs';
 
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
@@ -25,7 +28,7 @@ async function getAuctions(event, context) {
 
       auctions = result.Items;
    } catch (err) {
-      console.log(err);
+      console.error("Error querying DynamoDB: ", JSON.stringify(err, null, 2));
       throw new createError.InternalServerError(err);
    }
 
@@ -35,6 +38,13 @@ async function getAuctions(event, context) {
    };
 }
 
-export const handler = commonMiddleware(getAuctions);
+export const handler = commonMiddleware(getAuctions)
+   .use(validator({ 
+      eventSchema: transpileSchema(getAuctionsSchema), 
+      ajvOptions: { 
+         useDefaults: true, 
+         strict: false 
+      } 
+   }));
 
 
